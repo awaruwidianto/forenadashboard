@@ -959,9 +959,9 @@
     <div class="grid">
       <section class="card full">
         <h2>💗 기본 정보</h2>
-        <div class="form-row">
-          <div><label>보고 날짜</label><input id="reportDateDisplay" type="text" readonly /></div>
-          <input id="reportDate" type="hidden" />
+        <div class="form-row four">
+          <div><label>오늘 날짜</label><input id="reportDateDisplay" type="text" readonly /></div>
+          <div><label>보고 날짜</label><input id="reportDate" type="date" /></div>
           <div><label>보고 기준 시간</label><input id="reportTime" type="time" value="08:30" /></div>
           <div><label>보고자</label><input id="reporter" placeholder="예: 와루" /></div>
         </div>
@@ -1332,16 +1332,25 @@ function todayKoreaDateString(){
   return koreaNow().toISOString().slice(0,10);
 }
 
-function updateAutoReportDateFields(){
+function updateTodayDateDisplay(){
   const today = todayKoreaDateString();
-  const hidden = document.getElementById('reportDate');
   const display = document.getElementById('reportDateDisplay');
-  if(hidden) hidden.value = today;
   if(display) display.value = today;
 }
 
+function ensureReportDate(){
+  const reportDate = document.getElementById('reportDate');
+  const today = todayKoreaDateString();
+  if(reportDate && !reportDate.value) reportDate.value = today;
+  updateTodayDateDisplay();
+}
+
+function currentStorageDate(){
+  return text('reportDate') || todayKoreaDateString();
+}
+
 function storageKey(){
-  return `forenaCSReport_${todayKoreaDateString()}`;
+  return `forenaCSReport_${currentStorageDate()}`;
 }
 
 function formatShortDate(dateStr){
@@ -2031,7 +2040,7 @@ function previousDateKey(dateKey){
   return d.toISOString().slice(0,10);
 }
 function currentMonthPrefix(){
-  return todayKoreaDateString().slice(0,7);
+  return currentStorageDate().slice(0,7);
 }
 function maybeShowYesterdayCongrats(todayTotal, yesterdayTotal){
   const dateKey = text('reportDate') || todayKoreaDateString();
@@ -2216,7 +2225,7 @@ async function resetAll(){
   localStorage.removeItem(storageKey());
   document.querySelectorAll('input[type="number"]').forEach(el=>el.value=0);
   document.querySelectorAll('textarea').forEach(el=>el.value='');
-  updateAutoReportDateFields();
+  ensureReportDate();
   document.getElementById('reportTime').value = '08:30';
   document.getElementById('reporter').value = '';
   applyChecklist({});
@@ -2316,7 +2325,7 @@ document.addEventListener('change', e => {
 
 function clearFormForNewKoreaDate(){
   document.querySelectorAll('input[type="number"]').forEach(el => { el.value = 0; });
-  document.querySelectorAll('textarea').forEach(el => { el.value = ''; });
+  ['cancelReason','notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   staff = [];
   const reporterEl = document.getElementById('reporter');
   if(reporterEl) reporterEl.value = '';
@@ -2324,40 +2333,33 @@ function clearFormForNewKoreaDate(){
   if(reportTimeEl) reportTimeEl.value = '08:30';
   applyChecklist({});
 }
-async function hardResetForNewKoreaDate(showToast=false){
-  updateAutoReportDateFields();
-  clearFormForNewKoreaDate();
+let lastManualReportDate = '';
+
+async function loadSelectedReportDate(showToast=false){
+  ensureReportDate();
   await autoSetShiftForKoreaDate();
   loadData();
   resetReminderStateForToday();
   updateAll();
+  lastManualReportDate = currentStorageDate();
   if(window.forenaAttachRealtimeListener) window.forenaAttachRealtimeListener(true);
-  if(showToast) toast('00:00 KST 새 날짜로 자동 초기화됐어요');
+  if(showToast) toast(`${currentStorageDate()} 보고 날짜로 초기화됐어요`);
 }
-function msUntilNextKoreaMidnight(){
-  const now = new Date();
-  const utcNow = now.getTime() + now.getTimezoneOffset() * 60000;
-  const koreaNow = new Date(utcNow + 9 * 3600000);
-  const nextKoreaMidnightUtc = Date.UTC(
-    koreaNow.getUTCFullYear(),
-    koreaNow.getUTCMonth(),
-    koreaNow.getUTCDate() + 1,
-    0, 0, 0, 0
-  ) - 9 * 3600000;
-  return Math.max(0, nextKoreaMidnightUtc - now.getTime());
-}
-let koreaMidnightResetTimer = null;
-function scheduleExactKoreaMidnightReset(){
-  clearTimeout(koreaMidnightResetTimer);
-  koreaMidnightResetTimer = setTimeout(() => {
-    hardResetForNewKoreaDate(true);
-    scheduleExactKoreaMidnightReset();
-  }, msUntilNextKoreaMidnight());
-}
-function runMissedKoreaMidnightResetIfNeeded(){
-  const current = document.getElementById('reportDate')?.value;
-  const today = todayKoreaDateString();
-  if(current && current !== today) hardResetForNewKoreaDate(true);
+
+async function handleManualReportDateChange(){
+  const reportDateEl = document.getElementById('reportDate');
+  if(!reportDateEl) return;
+  const nextDate = reportDateEl.value || todayKoreaDateString();
+  const previousDate = lastManualReportDate || todayKoreaDateString();
+  if(nextDate === previousDate) return;
+  const ok = confirm(`보고 날짜를 ${nextDate}로 변경하면 입력 내용이 초기화돼요.\n초기화할까요?`);
+  if(!ok){
+    reportDateEl.value = previousDate;
+    return;
+  }
+  clearFormForNewKoreaDate();
+  reportDateEl.value = nextDate;
+  await loadSelectedReportDate(true);
 }
 
 
@@ -2386,7 +2388,7 @@ applyHourlyPastelBackground();
 scheduleHourlyPastelBackground();
 buildDynamicFields();
 updateSoundControls();
-hardResetForNewKoreaDate(false);
+loadSelectedReportDate(false);
 suppressGameVoice = false;
 lastGameReservations = totals().reservations;
 lastSameDayTotal = totals().sameDay;
@@ -2395,17 +2397,7 @@ setInterval(maybeRunStaffLeaveAlerts, 60000);
 maybeRunTimedReminders();
 maybeRunStaffLeaveAlerts();
 
-scheduleExactKoreaMidnightReset();
-document.addEventListener('visibilitychange', () => {
-  if(!document.hidden){
-    runMissedKoreaMidnightResetIfNeeded();
-    scheduleExactKoreaMidnightReset();
-  }
-});
-window.addEventListener('focus', () => {
-  runMissedKoreaMidnightResetIfNeeded();
-  scheduleExactKoreaMidnightReset();
-});
+document.getElementById('reportDate')?.addEventListener('change', handleManualReportDateChange);
 </script>
 
 <script type="module">
@@ -2488,7 +2480,7 @@ window.addEventListener('focus', () => {
         applyingRemoteData = true;
         const safeFormData = {...remote.formData, reportDate: activeDateKey};
         window.forenaApplyData(safeFormData);
-        updateAutoReportDateFields();
+        updateTodayDateDisplay();
         applyingRemoteData = false;
         setFirebaseStatus(`실시간 동기화됨 (${activeDateKey})`, "online");
       }, (error) => {
