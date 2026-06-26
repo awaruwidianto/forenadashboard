@@ -20,6 +20,11 @@
       --green: #37a66a;
       --red: #e75d7c;
       --shadow: 0 14px 35px rgba(216, 95, 138, .18);
+      --dynamic-bg-1: #ffe7f0;
+      --dynamic-bg-2: #ffd9e8;
+      --dynamic-bg-3: #fff6fa;
+      --dynamic-bg-4: #ffe9f2;
+      --dynamic-bg-5: #ffffff;
     }
 
     * { box-sizing: border-box; }
@@ -28,9 +33,10 @@
       font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at 10% 10%, #ffe7f0 0 22%, transparent 23%),
-        radial-gradient(circle at 90% 5%, #ffd9e8 0 18%, transparent 19%),
-        linear-gradient(135deg, #fff6fa 0%, #ffe9f2 55%, #fff 100%);
+        radial-gradient(circle at 10% 10%, var(--dynamic-bg-1) 0 22%, transparent 23%),
+        radial-gradient(circle at 90% 5%, var(--dynamic-bg-2) 0 18%, transparent 19%),
+        linear-gradient(135deg, var(--dynamic-bg-3) 0%, var(--dynamic-bg-4) 55%, var(--dynamic-bg-5) 100%);
+      transition: background 1.2s ease;
       min-height: 100vh;
       padding: 24px;
       background-size: 140% 140%, 130% 130%, 180% 180%;
@@ -805,9 +811,10 @@
       justify-content: center;
       padding: 20px;
       background:
-        radial-gradient(circle at 15% 15%, #ffe7f0 0 22%, transparent 23%),
-        radial-gradient(circle at 85% 8%, #ffd9e8 0 18%, transparent 19%),
-        linear-gradient(135deg, #fff6fa 0%, #ffe9f2 55%, #fff 100%);
+        radial-gradient(circle at 15% 15%, var(--dynamic-bg-1) 0 22%, transparent 23%),
+        radial-gradient(circle at 85% 8%, var(--dynamic-bg-2) 0 18%, transparent 19%),
+        linear-gradient(135deg, var(--dynamic-bg-3) 0%, var(--dynamic-bg-4) 55%, var(--dynamic-bg-5) 100%);
+      transition: background 1.2s ease;
     }
     .auth-overlay.unlocked { display: none; }
     .auth-card {
@@ -827,7 +834,7 @@
     .top-checklist-card { margin-bottom: 18px; }
     .top-checklist {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
     }
     .top-checklist label {
@@ -945,6 +952,7 @@
         <label><input type="checkbox" data-check="next_visit"> 다음날 내원확인</label>
         <label><input type="checkbox" data-check="vip_follow"> VIP 후속 연락</label>
         <label><input type="checkbox" data-check="google_review"> 구글리뷰 답글</label>
+        <label><input type="checkbox" data-check="email_check"> 이메일 확인</label>
       </div>
     </section>
 
@@ -1178,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', initDashboardPasswordGate);
 <script>
 const sourceNames = ['인스타','틱톡','구글','소개','유튜브','챗지피티','온라인','샤오홍슈','쓰레드','페이스북','재진','네이버','여신','레딧'];
 const agencyNames = ['프리큐티','MD','크리에이트립','ROAM','부키메드','강남언니','클룩'];
-const checklistIds = ['next_wix','next_visit','vip_follow','google_review'];
+const checklistIds = ['next_wix','next_visit','vip_follow','google_review','email_check'];
 
 const SOUND_SETTINGS_KEY = 'forenaSoundSettings';
 let soundMuted = false;
@@ -1200,6 +1208,79 @@ function effectiveVolume(){
 }
 function isSoundOn(){
   return effectiveVolume() > 0;
+}
+function pickRandom(list){
+  if(!Array.isArray(list) || list.length === 0) return '';
+  return list[Math.floor(Math.random() * list.length)];
+}
+const VOICE_LINES = {
+  sameDay: [
+    '당일예약 들어왔어요!',
+    '당예 추가됐어요!',
+    '좋은 소식! 당일예약입니다.',
+    '새로운 당일예약이 생겼어요!',
+    '당일예약 성공!',
+    '오늘도 화이팅! 당일예약이에요!',
+    '예약 하나 더 들어왔어요!',
+    '당일예약 접수 완료!'
+  ],
+  email: [
+    '이메일 확인 부탁드려요.',
+    '이메일 한 번 확인해주세요.',
+    '이메일 확인 시간입니다.',
+    '메일함 체크 부탁드립니다.',
+    '새로운 이메일이 있는지 확인해주세요.'
+  ],
+  wix: [
+    '윅스 확인 부탁드립니다!',
+    '윅스에 새로운 예약이 있는지 확인해주세요.',
+    '윅스 체크 시간입니다.',
+    '윅스 예약 확인 부탁드려요!',
+    '윅스 한 번 확인해주세요!',
+    '윅스에 문의나 예약이 있는지 체크해주세요.',
+    '윅스 확인하고 놓치는 예약이 없도록 부탁드립니다!',
+    '윅스 확인 시간입니다. 감사합니다!'
+  ],
+  markvu: [
+    '마크뷰 성분 추천 보냈나요?',
+    '마크뷰 추천 확인 부탁드려요.',
+    '마크뷰 결과 안내 확인해주세요.',
+    '마크뷰 성분 추천 체크 시간입니다.'
+  ],
+  lunch: [
+    '{name} 점심 60분 다녀오겠습니다.',
+    '{name} 점심 다녀오겠습니다.',
+    '맛있는 점심시간 되세요.',
+    '{name} 점심 60분 시작합니다.',
+    '맛있게 드시고 오세요.'
+  ],
+  rest: [
+    '{name} 휴게 20분 다녀오겠습니다.',
+    '{name} 휴게 다녀오겠습니다.',
+    '잠시 휴게시간입니다.',
+    '{name} 20분 휴게 시작합니다.',
+    '쉬었다 오세요.',
+    '잠시 리프레시 타임입니다.'
+  ],
+  weekendBreak: [
+    '{name} 점심/휴게 40분 다녀오겠습니다.',
+    '{name} 점심/휴게 다녀오겠습니다.',
+    '점심/휴게 40분 시작합니다.',
+    '잠시 휴게 시간입니다.'
+  ],
+  breakDone: [
+    '{name} {label} 시간이 끝났어요!',
+    '{name} {label} 복귀 시간입니다.',
+    '{name} {label} 완료됐어요.',
+    '{name} {label} 타이머가 끝났습니다.'
+  ]
+};
+function lineFrom(group, replacements = {}){
+  let line = pickRandom(VOICE_LINES[group]) || '';
+  Object.entries(replacements).forEach(([key, value]) => {
+    line = line.replaceAll(`{${key}}`, value);
+  });
+  return line;
 }
 function updateSoundControls(){
   const controls = document.getElementById('soundControls');
@@ -1444,10 +1525,12 @@ function renderStaff(){
       <div class="break-controls ${isWeekendMode ? 'weekend-mode' : ''}">
         <div>
           <button class="break-button" id="breakBtn_${i}_lunch" onclick="startStaffBreak(${i}, 'lunch')">${isWeekendMode ? '점심/휴게 40분' : '점심 60분'}</button>
+          <button class="break-button secondary" id="breakPauseBtn_${i}_lunch" onclick="pauseStaffBreak(${i}, 'lunch')" style="margin-top:5px; display:none;">⏸ 일시정지</button>
           <div class="break-countdown" id="breakCountdown_${i}_lunch"></div>
         </div>
         ${isWeekendMode ? '' : `<div>
           <button class="break-button secondary" id="breakBtn_${i}_rest" onclick="startStaffBreak(${i}, 'rest')">휴게 20분</button>
+          <button class="break-button secondary" id="breakPauseBtn_${i}_rest" onclick="pauseStaffBreak(${i}, 'rest')" style="margin-top:5px; display:none;">⏸ 일시정지</button>
           <div class="break-countdown" id="breakCountdown_${i}_rest"></div>
         </div>`}
       </div>
@@ -1462,6 +1545,16 @@ function breakDurationMinutes(type){
   if(currentShiftType === 'weekend') return 40;
   return type === 'rest' ? 20 : 60;
 }
+
+function breakLabel(type){
+  if(currentShiftType === 'weekend') return '점심/휴게';
+  return type === 'rest' ? '휴게' : '점심';
+}
+function breakStartMessage(name, type){
+  const staffName = name || '근무자';
+  if(currentShiftType === 'weekend') return lineFrom('weekendBreak', {name: staffName});
+  return type === 'rest' ? lineFrom('rest', {name: staffName}) : lineFrom('lunch', {name: staffName});
+}
 function startStaffBreak(i, type){
   normalizeStaff();
   if(!staff[i]) return;
@@ -1470,10 +1563,39 @@ function startStaffBreak(i, type){
   const endAt = Date.now() + duration * 60000;
   staff[i].breakState[`${type}EndAt`] = endAt;
   staff[i].breakState[`${type}Done`] = false;
+  staff[i].breakState[`${type}Paused`] = false;
+  staff[i].breakState[`${type}RemainingMs`] = 0;
+  const msg = breakStartMessage(staff[i].name, type);
+  showSmartPopup('⏱️ 타이머 시작', msg);
+  speakCheer(msg);
   updateBreakCountdowns();
   saveData(false);
   if(window.forenaScheduleFirebaseSave) window.forenaScheduleFirebaseSave();
-  toast(`${staff[i].name || '근무자'} ${currentShiftType === 'weekend' ? '점심/휴게' : type === 'rest' ? '휴게' : '점심'} ${duration}분 시작!`);
+  toast(`${staff[i].name || '근무자'} ${breakLabel(type)} ${duration}분 시작!`);
+}
+function pauseStaffBreak(i, type){
+  normalizeStaff();
+  if(!staff[i]) return;
+  staff[i].breakState = staff[i].breakState || {};
+  const pausedKey = `${type}Paused`;
+  const endKey = `${type}EndAt`;
+  const remainKey = `${type}RemainingMs`;
+  const isPaused = !!staff[i].breakState[pausedKey];
+  const endAt = Number(staff[i].breakState[endKey] || 0);
+  if(isPaused){
+    const remaining = Number(staff[i].breakState[remainKey] || breakDurationMinutes(type) * 60000);
+    staff[i].breakState[endKey] = Date.now() + remaining;
+    staff[i].breakState[pausedKey] = false;
+    staff[i].breakState[remainKey] = 0;
+    toast(`${staff[i].name || '근무자'} ${breakLabel(type)} 타이머 재개`);
+  } else if(endAt && Date.now() < endAt){
+    staff[i].breakState[remainKey] = Math.max(0, endAt - Date.now());
+    staff[i].breakState[pausedKey] = true;
+    toast(`${staff[i].name || '근무자'} ${breakLabel(type)} 타이머 일시정지`);
+  }
+  updateBreakCountdowns();
+  saveData(false);
+  if(window.forenaScheduleFirebaseSave) window.forenaScheduleFirebaseSave();
 }
 function formatCountdown(ms){
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -1490,29 +1612,41 @@ function updateBreakCountdowns(){
       const endAt = Number(s.breakState[`${type}EndAt`] || 0);
       const done = !!s.breakState[`${type}Done`];
       const btn = document.getElementById(`breakBtn_${i}_${type}`);
+      const pauseBtn = document.getElementById(`breakPauseBtn_${i}_${type}`);
       const el = document.getElementById(`breakCountdown_${i}_${type}`);
       if(!el || !btn) return;
+      const paused = !!s.breakState[`${type}Paused`];
+      const remaining = Number(s.breakState[`${type}RemainingMs`] || 0);
       el.classList.remove('active','done');
       btn.classList.remove('done');
-      if(endAt && Date.now() < endAt){
+      if(pauseBtn) pauseBtn.style.display = endAt && !done ? '' : 'none';
+      if(paused && endAt && !done){
+        el.textContent = `일시정지 ${formatCountdown(remaining || Math.max(0, endAt - Date.now()))}`;
+        el.classList.add('active');
+        if(pauseBtn) pauseBtn.textContent = '▶ 재개';
+      } else if(endAt && Date.now() < endAt){
         el.textContent = `남은 시간 ${formatCountdown(endAt - Date.now())}`;
         el.classList.add('active');
+        if(pauseBtn) pauseBtn.textContent = '⏸ 일시정지';
       } else if(endAt && !done){
         s.breakState[`${type}Done`] = true;
         el.textContent = '시간 완료!';
         el.classList.add('done');
         btn.classList.add('done');
         const label = currentShiftType === 'weekend' ? '점심/휴게' : type === 'rest' ? '휴게' : '점심';
-        showSmartPopup('⏰ 복귀 알림', `${s.name || '근무자'} ${label} 시간이 끝났어요!`);
-        speakCheer(`${s.name || '근무자'} ${label} 시간이 끝났어요`);
+        const doneMsg = lineFrom('breakDone', {name: s.name || '근무자', label});
+        showSmartPopup('⏰ 복귀 알림', doneMsg);
+        speakCheer(doneMsg);
         saveData(false);
         if(window.forenaScheduleFirebaseSave) window.forenaScheduleFirebaseSave();
       } else if(done){
         el.textContent = '완료';
         el.classList.add('done');
         btn.classList.add('done');
+        if(pauseBtn) pauseBtn.style.display = 'none';
       } else {
         el.textContent = '';
+        if(pauseBtn) pauseBtn.style.display = 'none';
       }
     });
   });
@@ -1605,32 +1739,42 @@ function showSmartPopup(title, message, mode='default'){
 }
 const REMINDER_INTERVAL_MS = 20 * 60000;
 const REMINDER_STAGGER_MS = 10 * 60000;
+const EMAIL_REMINDER_INTERVAL_MS = 2 * 60 * 60000;
 const reminderState = {
   date: todayKoreaDateString(),
   sameDay: Date.now() - REMINDER_INTERVAL_MS,
-  markvu: Date.now() - REMINDER_STAGGER_MS
+  markvu: Date.now() - REMINDER_STAGGER_MS,
+  email: Date.now()
 };
 function resetReminderStateForToday(){
   const now = Date.now();
   reminderState.date = todayKoreaDateString();
   reminderState.sameDay = now - REMINDER_INTERVAL_MS;
   reminderState.markvu = now - REMINDER_STAGGER_MS;
+  reminderState.email = now;
 }
 function maybeRunTimedReminders(){
   if(reminderState.date !== todayKoreaDateString()) resetReminderStateForToday();
   if(!isWorkingHoursNow()) return;
   const now = Date.now();
   const reminders = [
-    {key:'sameDay', title:'💗 당일예약 리마인더', every:REMINDER_INTERVAL_MS, message:'당일 예약 누락 없나요?'},
-    {key:'markvu', title:'🟢 마크뷰 리마인더', every:REMINDER_INTERVAL_MS, message:'마크뷰 성분 추천 보냈나요?'}
+    {key:'sameDay', title:'⏰ 윅스 예약 리마인더', every:REMINDER_INTERVAL_MS, group:'wix', mode:'sameDay'},
+    {key:'markvu', title:'🟢 마크뷰 리마인더', every:REMINDER_INTERVAL_MS, group:'markvu', mode:'markvu'}
   ];
   reminders.forEach(r => {
     if(now - reminderState[r.key] >= r.every){
       reminderState[r.key] = now;
-      showSmartPopup(r.title, r.message, r.key);
-      speakCheer(r.message);
+      const msg = lineFrom(r.group);
+      showSmartPopup(r.title, msg, r.mode);
+      speakCheer(msg);
     }
   });
+  if(now - reminderState.email >= EMAIL_REMINDER_INTERVAL_MS){
+    reminderState.email = now;
+    const msg = lineFrom('email');
+    showSmartPopup('✉️ 이메일 확인 리마인더', msg);
+    speakCheer(msg);
+  }
 }
 function maybeRunStaffLeaveAlerts(){
   if(!isWorkingHoursNow()) return;
@@ -1766,8 +1910,9 @@ function celebrateReservationIncrease(after, before){
 }
 
 function celebrateSameDayIncrease(after, before){
-  showCheer(`⚡ 당예 +${after - before}! 코디 파이팅!`);
-  speakCheer('당예 생겼네요! 코디 힘들겠네요');
+  const msg = lineFrom('sameDay');
+  showCheer(`⚡ 당예 +${after - before}! ${msg}`);
+  speakCheer(msg);
 }
 
 function celebrateCancelIncrease(){
@@ -2215,6 +2360,30 @@ function runMissedKoreaMidnightResetIfNeeded(){
   if(current && current !== today) hardResetForNewKoreaDate(true);
 }
 
+
+function applyHourlyPastelBackground(){
+  const palettes = [
+    ['#ffe7f0','#ffd9e8','#fff6fa','#ffe9f2','#ffffff'],
+    ['#e9fff1','#d9f8e6','#f7fffa','#e9fff1','#ffffff'],
+    ['#fff6c9','#fff0a8','#fffdf1','#fff4d8','#ffffff'],
+    ['#f2ecff','#e8ddff','#fbf8ff','#f1eaff','#ffffff'],
+    ['#e8f7ff','#d9f1ff','#f7fcff','#e9f7ff','#ffffff']
+  ];
+  const hour = koreaNow().getHours();
+  const selected = palettes[hour % palettes.length];
+  selected.forEach((color, idx) => document.documentElement.style.setProperty(`--dynamic-bg-${idx + 1}`, color));
+}
+function scheduleHourlyPastelBackground(){
+  const now = koreaNow();
+  const msToNextHour = ((60 - now.getMinutes()) * 60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+  setTimeout(() => {
+    applyHourlyPastelBackground();
+    setInterval(applyHourlyPastelBackground, 60 * 60 * 1000);
+  }, Math.max(1000, msToNextHour));
+}
+
+applyHourlyPastelBackground();
+scheduleHourlyPastelBackground();
 buildDynamicFields();
 updateSoundControls();
 hardResetForNewKoreaDate(false);
