@@ -161,7 +161,7 @@
     .compact-two-card { padding: 14px; }
     .compact-two {
       display: grid;
-      grid-template-columns: .82fr 1.18fr;
+      grid-template-columns: .75fr .75fr 1.1fr;
       gap: 12px;
       align-items: start;
     }
@@ -1075,6 +1075,12 @@
             </div>
           </div>
           <div class="compact-panel">
+            <h2><span class="title-emoji">🚶</span> 워크인</h2>
+            <div class="counter-list">
+              <div class="counter" data-key="walkin_count"><div class="counter-name">워크인</div><button class="round secondary" onclick="change('walkin_count',-1)">−</button><input id="walkin_count" type="number" value="0" oninput="updateAll()"><button class="round" onclick="change('walkin_count',1)">+</button></div>
+            </div>
+          </div>
+          <div class="compact-panel">
             <h2>📘 Facebook</h2>
             <div class="counter-list">
               <div class="counter"><div class="counter-name">예약</div><button class="round secondary" onclick="change('fb_res',-1)">−</button><input id="fb_res" type="number" value="0" oninput="updateAll()"><button class="round" onclick="change('fb_res',1)">+</button></div>
@@ -1371,7 +1377,7 @@ function toggleSoundMute(){
 }
 loadSoundSettings();
 
-const inputIds = ['reportDate','reportTime','reporter','cancelReason','notes','home_res','wix_res','home_same','home_cancel','home_change','wa_res','wa_same','wa_cancel','ig_res','ig_same','ig_beta','ig_cancel','fb_res','fb_cancel','tt_res','tt_beta','tt_cancel','email_same','email_res','email_cancel','inq_ig','inq_wa','inq_tt','inq_email','inq_msg'];
+const inputIds = ['reportDate','reportTime','reporter','cancelReason','notes','home_res','wix_res','home_same','home_cancel','home_change','walkin_count','wa_res','wa_same','wa_cancel','ig_res','ig_same','ig_beta','ig_cancel','fb_res','fb_cancel','tt_res','tt_beta','tt_cancel','email_same','email_res','email_cancel','inq_ig','inq_wa','inq_tt','inq_email','inq_msg'];
 let staff = [];
 const reservationCounterIds = new Set(['home_res','wix_res','wa_res','ig_res','ig_beta','fb_res','tt_res','tt_beta','email_res', ...agencyNames.map((_,i)=>`agency_${i}`)]);
 const sameDayCounterIds = new Set(['home_same','wa_same','ig_same','email_same']);
@@ -2110,9 +2116,10 @@ function staffLineHtml(){
 function totals(){
   const reservations = n('home_res') + n('wix_res') + n('wa_res') + n('wa_same') + n('ig_res') + n('ig_same') + n('ig_beta') + n('fb_res') + n('tt_res') + n('tt_beta') + n('email_res') + n('email_same') + agencyNames.reduce((a,_,i)=>a+n(`agency_${i}`),0);
   const sameDay = n('home_same') + n('wa_same') + n('ig_same') + n('email_same');
+  const walkin = n('walkin_count');
   const cancels = n('home_cancel') + n('wa_cancel') + n('ig_cancel') + n('fb_cancel') + n('tt_cancel') + n('email_cancel');
   const changes = n('home_change');
-  return {reservations, sameDay, cancels, changes};
+  return {reservations, sameDay, walkin, cancels, changes};
 }
 
 function formatHistoryDate(dateKey){
@@ -2240,7 +2247,7 @@ function reportText(){
   const date = formatShortDate(text('reportDate'));
   const reportTime = text('reportTime') || '08:30';
   const timeLabel = `${reportTime} 기준`;
-  return `원장님 안녕하세요~!\n\n🔸${date} CS 예약보고 (${timeLabel})\n\n금일 총 예약건 ${t.reservations}건(다른 날짜 포함), 당일예약 ${t.sameDay}명(전화예약제외), 예약취소 ${t.cancels}건, 변경 ${t.changes}건입니다.\n\n근무인원:\n${staffLineText() || '-'}\n\n<취소 사유>\n**${text('cancelReason') || '없음'}\n\n<특이 사항>\n**${text('notes') || '없음'}\n\n구체적인 현황도 같이 전달드립니다.\n\n🌐 홈페이지\n- 예약: ${n('home_res')}건 (당예포함)\n- 추가예약: ${n('wix_res')}건 (1인 대표예약 추가인원 수)\n- 당예: ${n('home_same')}건\n- 취소: ${n('home_cancel')}건\n\n🔁 예약변경\n- 변경: ${n('home_change')}건\n\n💬 왓츠앱\n- 예약: ${n('wa_res')}건\n- 당예: ${n('wa_same')}건\n- 취소: ${n('wa_cancel')}건\n<${sourceLine()}>\n\n📸 인스타\n- 본계정 + 부계정 예약: ${n('ig_res')}건\n- 본계정 + 부계정 당일 예약: ${n('ig_same')}건\n- 베타 예약: ${n('ig_beta')}건\n- 취소: ${n('ig_cancel')}건\n\n📘 페이스북\n- 예약: ${n('fb_res')}건\n- 취소: ${n('fb_cancel')}건\n\n🤝 업체등\n${agencyLines()}\n\n🎵 틱톡\n- 예약: ${n('tt_res')}건\n- 베타 예약: ${n('tt_beta')}건\n- 취소: ${n('tt_cancel')}건\n\n✉️ 이메일\n- 당예: ${n('email_same')}건\n- 예약: ${n('email_res')}건\n- 취소: ${n('email_cancel')}건\n\n\n--\n\n💌 문의\n- 인스타 일반 문의 = ${n('inq_ig')}건\n- 왓츠앱 일반 문의 = 답변드린 거 대략 ${n('inq_wa')}건\n- 틱톡 일반 문의 = ${n('inq_tt')}건\n- 이메일 일반 문의 = ${n('inq_email')}건\n- 메신저 문의 = ${n('inq_msg')}건`;
+  return `원장님 안녕하세요~!\n\n🔸${date} CS 예약보고 (${timeLabel})\n\n금일 총 예약건 ${t.reservations}건(다른 날짜 포함), 당일예약 ${t.sameDay}명(전화예약제외), 워크인 ${t.walkin}건, 예약취소 ${t.cancels}건, 변경 ${t.changes}건입니다.\n\n근무인원:\n${staffLineText() || '-'}\n\n<취소 사유>\n**${text('cancelReason') || '없음'}\n\n<특이 사항>\n**${text('notes') || '없음'}\n\n구체적인 현황도 같이 전달드립니다.\n\n🌐 홈페이지\n- 예약: ${n('home_res')}건 (당예포함)\n- 추가예약: ${n('wix_res')}건 (1인 대표예약 추가인원 수)\n- 당예: ${n('home_same')}건\n- 취소: ${n('home_cancel')}건\n\n🔁 예약변경\n- 변경: ${n('home_change')}건\n\n🚶 워크인\n- 워크인: ${n('walkin_count')}건\n\n💬 왓츠앱\n- 예약: ${n('wa_res')}건\n- 당예: ${n('wa_same')}건\n- 취소: ${n('wa_cancel')}건\n<${sourceLine()}>\n\n📸 인스타\n- 본계정 + 부계정 예약: ${n('ig_res')}건\n- 본계정 + 부계정 당일 예약: ${n('ig_same')}건\n- 베타 예약: ${n('ig_beta')}건\n- 취소: ${n('ig_cancel')}건\n\n📘 페이스북\n- 예약: ${n('fb_res')}건\n- 취소: ${n('fb_cancel')}건\n\n🤝 업체등\n${agencyLines()}\n\n🎵 틱톡\n- 예약: ${n('tt_res')}건\n- 베타 예약: ${n('tt_beta')}건\n- 취소: ${n('tt_cancel')}건\n\n✉️ 이메일\n- 당예: ${n('email_same')}건\n- 예약: ${n('email_res')}건\n- 취소: ${n('email_cancel')}건\n\n\n--\n\n💌 문의\n- 인스타 일반 문의 = ${n('inq_ig')}건\n- 왓츠앱 일반 문의 = 답변드린 거 대략 ${n('inq_wa')}건\n- 틱톡 일반 문의 = ${n('inq_tt')}건\n- 이메일 일반 문의 = ${n('inq_email')}건\n- 메신저 문의 = ${n('inq_msg')}건`;
 }
 
 function updatePreview(){
@@ -2252,13 +2259,14 @@ function updatePreview(){
     <h3>🔸${date} CS 예약보고 (${escapeHtml(timeLabel)})</h3>
     <div>원장님 안녕하세요~!</div>
     <br>
-    <div>금일 총 예약건 <b>${t.reservations}건</b>(다른 날짜 포함), 당일예약 <b>${t.sameDay}명</b>(전화예약제외), 예약취소 <b>${t.cancels}건</b>, 변경 <b>${t.changes}건</b>입니다.</div>
+    <div>금일 총 예약건 <b>${t.reservations}건</b>(다른 날짜 포함), 당일예약 <b>${t.sameDay}명</b>(전화예약제외), 워크인 <b>${t.walkin}건</b>, 예약취소 <b>${t.cancels}건</b>, 변경 <b>${t.changes}건</b>입니다.</div>
     <div class="section"><div class="section-title">👩‍💻 근무인원</div><ul>${staffLineHtml()}</ul></div>
     <div class="section"><div class="section-title">취소 사유</div>**${escapeHtml(text('cancelReason') || '없음')}</div>
     <div class="section"><div class="section-title">특이 사항</div>**${escapeHtml(text('notes') || '없음')}</div>
     <div class="divider"></div>
     <div class="section"><div class="section-title">🌐 홈페이지</div><ul><li>- 예약: ${n('home_res')}건 (당예포함)</li><li>- 추가예약: ${n('wix_res')}건 (1인 대표예약 추가인원 수)</li><li>- 당예: ${n('home_same')}건</li><li>- 취소: ${n('home_cancel')}건</li></ul></div>
     <div class="section"><div class="section-title">🔁 예약변경</div><ul><li>- 변경: ${n('home_change')}건</li></ul></div>
+    <div class="section"><div class="section-title">🚶 워크인</div><ul><li>- 워크인: ${n('walkin_count')}건</li></ul></div>
     <div class="section"><div class="section-title">💬 왓츠앱</div><ul><li>- 예약: ${n('wa_res')}건</li><li>- 당예: ${n('wa_same')}건</li><li>- 취소: ${n('wa_cancel')}건</li></ul><div class="small">&lt;${escapeHtml(sourceLine())}&gt;</div></div>
     <div class="section"><div class="section-title">📸 인스타</div><ul><li>- 본계정 + 부계정 예약: ${n('ig_res')}건</li><li>- 본계정 + 부계정 당일 예약: ${n('ig_same')}건</li><li>- 베타 예약: ${n('ig_beta')}건</li><li>- 취소: ${n('ig_cancel')}건</li></ul></div>
     <div class="section"><div class="section-title">📘 페이스북</div><ul><li>- 예약: ${n('fb_res')}건</li><li>- 취소: ${n('fb_cancel')}건</li></ul></div>
@@ -2656,6 +2664,7 @@ let allowSaveBeforeInitialSnapshot = false;
           sameDay: currentTotals.sameDay,
           cancel: currentTotals.cancels,
           change: currentTotals.changes,
+          walkin: currentTotals.walkin,
           updatedAt: serverTimestamp(),
           updatedBy: reporter
         });
