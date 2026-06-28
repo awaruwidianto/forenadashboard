@@ -950,12 +950,146 @@
     .auth-card { padding: 24px; }
     .auth-card input { font-size: 16px; }
 
+
+    .mini-notice-card {
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8fb 70%, #e9fff1 100%);
+    }
+    .mini-notice-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .mini-notice-label {
+      font-weight: 950;
+      color: var(--rose);
+      white-space: nowrap;
+    }
+    .mini-notice-input {
+      min-height: 38px;
+      height: 38px;
+      max-height: 38px;
+      resize: none;
+      overflow-y: auto;
+    }
+    .mini-notice-display {
+      margin-top: 8px;
+      padding: 8px 11px;
+      border-radius: 14px;
+      background: #fff8fb;
+      border: 1px dashed #f6bed1;
+      color: var(--ink);
+      font-size: 12.5px;
+      font-weight: 800;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .quick-tools-card {
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #fff 0%, #fff8fb 58%, #f7fffa 100%);
+    }
+    .quick-tools-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 10px;
+    }
+    .quick-tool-app {
+      text-decoration: none;
+      color: var(--ink);
+      background: rgba(255,255,255,.86);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 11px 8px;
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      min-height: 78px;
+      box-shadow: 0 8px 18px rgba(216, 95, 138, .10);
+      transition: transform .12s, box-shadow .12s, border-color .12s;
+      text-align: center;
+      font-weight: 900;
+      font-size: 11.5px;
+      line-height: 1.25;
+    }
+    .quick-tool-app:hover {
+      transform: translateY(-2px);
+      border-color: var(--pink-main);
+      box-shadow: 0 12px 24px rgba(216, 95, 138, .16);
+    }
+    .quick-tool-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #ffe1ec, #ffffff);
+      font-size: 18px;
+    }
+    .blocked-time-card {
+      background: linear-gradient(135deg, #fff 0%, #fff8fb 62%, #fff1f4 100%);
+      border-color: #f4c4d5;
+    }
+    .blocked-time-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .blocked-time-head h2 { margin-bottom: 0; }
+    .blocked-time-grid {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 7px;
+      scrollbar-width: thin;
+    }
+    .time-block-btn {
+      flex: 0 0 auto;
+      min-width: 76px;
+      background: #fff;
+      color: var(--rose);
+      border: 1px solid var(--border);
+      box-shadow: 0 7px 15px rgba(216, 95, 138, .10);
+      position: relative;
+      overflow: hidden;
+    }
+    .time-block-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(255,255,255,.24) 7px 13px);
+      opacity: 0;
+      transition: opacity .18s;
+    }
+    .time-block-btn.blocked {
+      background: var(--red);
+      color: #fff;
+      border-color: #e75d7c;
+      animation: blockPulse .28s ease;
+      box-shadow: 0 10px 22px rgba(231, 93, 124, .24);
+    }
+    .time-block-btn.blocked::after { opacity: 1; }
+    .time-block-btn.blocked::before {
+      content: '🚫';
+      margin-right: 4px;
+    }
+    @keyframes blockPulse {
+      0% { transform: scale(.96); }
+      58% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
     @media (max-width: 900px) {
       body { padding: 14px; }
       .grid, .form-row, .form-row.two, .form-row.four, .lead-source-grid, .source-split { grid-template-columns: 1fr; }
       .counter { grid-template-columns: 1fr 36px 70px 36px; }
       .staff-row { grid-template-columns: 1fr; }
-      .game-board, .announcement-row, .history-layout, .summary-stats, .top-checklist, .compact-two { grid-template-columns: 1fr; }
+      .game-board, .announcement-row, .history-layout, .summary-stats, .top-checklist, .compact-two, .mini-notice-row { grid-template-columns: 1fr; }
+      .quick-tools-grid { grid-template-columns: repeat(4, 1fr); }
       #reportPreview { padding: 22px; }
     }
 
@@ -1012,6 +1146,31 @@
       </div>
     </section>
 
+
+
+    <section class="card full mini-notice-card">
+      <div class="mini-notice-row">
+        <div class="mini-notice-label">📌 공지</div>
+        <textarea id="pinnedNotice" class="mini-notice-input" placeholder="예: 오늘 전달사항을 여기에 고정해주세요" oninput="updatePinnedNoticeDisplay(); updateAll();"></textarea>
+        <button type="button" class="secondary small" onclick="clearPinnedNotice()">공지 지우기</button>
+      </div>
+      <div id="pinnedNoticeDisplay" class="mini-notice-display"></div>
+    </section>
+
+    <section class="card full quick-tools-card">
+      <h2>🧰 바로가기</h2>
+      <div class="quick-tools-grid">
+        <a class="quick-tool-app" href="https://awaruwidianto.github.io/forenaskinrecs/" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">🧴</span><span>성분 추천</span></a>
+        <a class="quick-tool-app" href="https://awaruwidianto.github.io/forenareceipt/" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">🧾</span><span>수가표번역</span></a>
+        <a class="quick-tool-app" href="https://docs.google.com/spreadsheets/d/1k4zLiwaFqs-BtrApleeVgPNzli7sz8s4RNdiWRmbTKI/edit?usp=sharing" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">📋</span><span>인수인계 시트</span></a>
+        <a class="quick-tool-app" href="https://drive.google.com/drive/folders/1YtG6Mg5PgXSB5Bni1EZ7jqYBwSx-XVEa?usp=sharing" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">📁</span><span>CS파일 드라이브</span></a>
+        <a class="quick-tool-app" href="https://docs.google.com/spreadsheets/d/1SBwaOF6OIQRpQNVGTAbqB_R1Hp4KhSXrf0LA--vmmWQ/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">👑</span><span>VIP 시트</span></a>
+        <a class="quick-tool-app" href="https://docs.google.com/spreadsheets/d/1iiywXw5XbiOq973h5_ryPM_GIYvV63FmbLOjvF2u_cU/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">🌐</span><span>영어 CS 시트</span></a>
+        <a class="quick-tool-app" href="https://docs.google.com/document/d/1VU--G6p2n1vPZLbnZ_-MRkhG3pCzVV8k/edit?usp=sharing&amp;ouid=115516454055822831694&amp;rtpof=true&amp;sd=true" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">💬</span><span>컨택글</span></a>
+        <a class="quick-tool-app" href="https://docs.google.com/spreadsheets/d/1VVetBoxvT_luWuz1FncfuvwxUSjHtxg4uwbfVqfjXrw/edit?gid=606337068#gid=606337068" target="_blank" rel="noopener noreferrer"><span class="quick-tool-icon">🟢</span><span>마크뷰 전송 리스트</span></a>
+      </div>
+    </section>
+
     <div class="grid">
       <section class="card full">
         <h2>💗 기본 정보</h2>
@@ -1036,6 +1195,16 @@
         <div class="hint" id="breakModeHint">한국 날짜 기준으로 평일/주말/공휴일 모드만 자동 확인해요. 근무인원은 매일 아침 직접 추가해주세요.</div>
         <div id="staffTable" class="staff-table"></div>
         <button class="secondary small" onclick="addStaffRow()">+ 근무자 추가</button>
+      </section>
+
+
+      <section class="card full blocked-time-card">
+        <div class="blocked-time-head">
+          <h2>⛔ 예약 안되는 시간대</h2>
+          <button type="button" class="secondary small" onclick="clearBlockedTimes()">전체 해제</button>
+        </div>
+        <div class="hint">평일 10:00-19:00 / 주말·공휴일 10:00-16:00 기준, 30분 단위로 눌러서 빨간색 차단 표시해요.</div>
+        <div class="blocked-time-grid" id="blockedTimeGrid"></div>
       </section>
 
       <section class="card full game-card">
@@ -1377,7 +1546,7 @@ function toggleSoundMute(){
 }
 loadSoundSettings();
 
-const inputIds = ['reportDate','reportTime','reporter','cancelReason','notes','home_res','wix_res','home_same','home_cancel','home_change','walkin_count','wa_res','wa_same','wa_cancel','ig_res','ig_same','ig_beta','ig_cancel','fb_res','fb_cancel','tt_res','tt_beta','tt_cancel','email_same','email_res','email_cancel','inq_ig','inq_wa','inq_tt','inq_email','inq_msg'];
+const inputIds = ['reportDate','reportTime','reporter','cancelReason','notes','pinnedNotice','home_res','wix_res','home_same','home_cancel','home_change','walkin_count','wa_res','wa_same','wa_cancel','ig_res','ig_same','ig_beta','ig_cancel','fb_res','fb_cancel','tt_res','tt_beta','tt_cancel','email_same','email_res','email_cancel','inq_ig','inq_wa','inq_tt','inq_email','inq_msg'];
 let staff = [];
 const reservationCounterIds = new Set(['home_res','wix_res','wa_res','ig_res','ig_beta','fb_res','tt_res','tt_beta','email_res', ...agencyNames.map((_,i)=>`agency_${i}`)]);
 const sameDayCounterIds = new Set(['home_same','wa_same','ig_same','email_same']);
@@ -1388,6 +1557,54 @@ let lastGameReservations = 0;
 let lastSameDayTotal = 0;
 let suppressGameVoice = true;
 let suppressLocalSave = false;
+let blockedTimes = [];
+function minutesToTime(totalMins){
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function timeSlotsForShift(){
+  const end = currentShiftType === 'weekend' ? 16 * 60 : 19 * 60;
+  const slots = [];
+  for(let mins = 10 * 60; mins <= end; mins += 30) slots.push(minutesToTime(mins));
+  return slots;
+}
+function renderBlockedTimeButtons(){
+  const box = document.getElementById('blockedTimeGrid');
+  if(!box) return;
+  const active = new Set(blockedTimes || []);
+  box.innerHTML = timeSlotsForShift().map(time => `<button type="button" class="time-block-btn ${active.has(time) ? 'blocked' : ''}" onclick="toggleBlockedTime('${time}')">${time}</button>`).join('');
+}
+function toggleBlockedTime(time){
+  const set = new Set(blockedTimes || []);
+  if(set.has(time)) set.delete(time); else set.add(time);
+  blockedTimes = Array.from(set).sort();
+  renderBlockedTimeButtons();
+  updateAll();
+  toast(set.has(time) ? `${time} 예약불가 표시` : `${time} 예약불가 해제`);
+}
+function clearBlockedTimes(){
+  blockedTimes = [];
+  renderBlockedTimeButtons();
+  updateAll();
+  toast('예약불가 시간대를 모두 해제했어요');
+}
+function updatePinnedNoticeDisplay(){
+  const input = document.getElementById('pinnedNotice');
+  const display = document.getElementById('pinnedNoticeDisplay');
+  if(!display) return;
+  const msg = (input?.value || '').trim();
+  display.textContent = msg ? `📌 ${msg}` : '';
+  display.style.display = msg ? 'block' : 'none';
+}
+function clearPinnedNotice(){
+  const input = document.getElementById('pinnedNotice');
+  if(input) input.value = '';
+  updatePinnedNoticeDisplay();
+  updateAll();
+  toast('공지 지웠어요');
+}
+
 // Milestone voices repeat whenever the total crosses a milestone upward.
 // Example: 9 -> 12 says 대박이네요, and if it goes back to 9 then passes 10 again, it says it again.
 
@@ -1507,6 +1724,7 @@ function setShift(type, options = {}){
   // Staff must be added manually each morning before reservation numbers can be edited.
   if(options.applyDefaultStaff) staff = defaultStaffForShift(currentShiftType);
   renderStaff();
+  renderBlockedTimeButtons();
   updateBreakModeHint();
   updateAll();
 }
@@ -2278,10 +2496,10 @@ function updatePreview(){
   `;
 }
 
-function updateAll(){ updatePreview(); updateSourceSummary(); updateGameDashboard(); checkGameVoices(); updateStaffGate(); if(!suppressLocalSave){ saveData(false); if(window.forenaScheduleFirebaseSave) window.forenaScheduleFirebaseSave(); } }
+function updateAll(){ updatePinnedNoticeDisplay(); updatePreview(); updateSourceSummary(); updateGameDashboard(); checkGameVoices(); updateStaffGate(); if(!suppressLocalSave){ saveData(false); if(window.forenaScheduleFirebaseSave) window.forenaScheduleFirebaseSave(); } }
 function collectData(){
   normalizeStaff();
-  const data = { staff, checklist: collectChecklist(), dynamic:{}, shift: currentShiftType || 'weekday' };
+  const data = { staff, checklist: collectChecklist(), dynamic:{}, shift: currentShiftType || 'weekday', blockedTimes: Array.isArray(blockedTimes) ? blockedTimes : [] };
   [...inputIds, ...sourceNames.map((_,i)=>`src_${i}`), ...agencyNames.map((_,i)=>`agency_${i}`)].forEach(id=>{
     const el = document.getElementById(id);
     if(el) data[id] = el.value;
@@ -2296,10 +2514,13 @@ function applyData(data){
   });
   currentShiftType = data.shift === 'weekend' ? 'weekend' : 'weekday';
   staff = Array.isArray(data.staff) ? data.staff : [];
+  blockedTimes = Array.isArray(data.blockedTimes) ? data.blockedTimes : [];
   document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active', p.dataset.shift === currentShiftType));
   renderStaff();
+  renderBlockedTimeButtons();
   updateBreakModeHint();
   applyChecklist(data.checklist);
+  updatePinnedNoticeDisplay();
   updatePreview();
   updateSourceSummary();
   updateGameDashboard();
@@ -2420,7 +2641,10 @@ document.addEventListener('change', e => {
 
 function clearFormForNewKoreaDate(){
   document.querySelectorAll('input[type="number"]').forEach(el => { el.value = 0; });
-  ['cancelReason','notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['cancelReason','notes','pinnedNotice'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  blockedTimes = [];
+  updatePinnedNoticeDisplay();
+  renderBlockedTimeButtons();
   staff = [];
   const reporterEl = document.getElementById('reporter');
   if(reporterEl) reporterEl.value = '';
@@ -2499,6 +2723,8 @@ function scheduleHourlyPastelBackground(){
 applyHourlyPastelBackground();
 scheduleHourlyPastelBackground();
 buildDynamicFields();
+renderBlockedTimeButtons();
+updatePinnedNoticeDisplay();
 updateSoundControls();
 animateTitleEmojis();
 loadSelectedReportDate(false);
