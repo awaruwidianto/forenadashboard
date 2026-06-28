@@ -950,97 +950,12 @@
     .auth-card { padding: 24px; }
     .auth-card input { font-size: 16px; }
 
-
-    .audit-card {
-      margin-top: 22px;
-      background: linear-gradient(135deg, #fff 0%, #fff8fb 62%, #eef8ff 100%);
-    }
-    .audit-toolbar {
-      display: flex;
-      gap: 10px;
-      align-items: end;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-    .audit-toolbar-left {
-      display: grid;
-      grid-template-columns: 180px 180px auto;
-      gap: 10px;
-      align-items: end;
-    }
-    .audit-table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255,255,255,.78);
-    }
-    .audit-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 920px;
-      font-size: 12px;
-    }
-    .audit-table th, .audit-table td {
-      padding: 10px 9px;
-      border-bottom: 1px solid #f6d3df;
-      text-align: left;
-      vertical-align: middle;
-    }
-    .audit-table th {
-      color: var(--rose);
-      background: #fff2f7;
-      font-weight: 900;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-    .audit-table tr:last-child td { border-bottom: 0; }
-    .audit-action {
-      display: inline-flex;
-      padding: 5px 8px;
-      border-radius: 999px;
-      background: #fff8fb;
-      border: 1px solid var(--border);
-      color: var(--rose);
-      font-weight: 900;
-      white-space: nowrap;
-    }
-    .audit-action.possible_reset_to_zero, .audit-action.restore_snapshot {
-      background: #fff1f4;
-      border-color: #f3a8bb;
-      color: #c33f68;
-    }
-    .audit-action.increase {
-      background: #effff5;
-      border-color: #9be3b7;
-      color: #1f7048;
-    }
-    .audit-browser {
-      max-width: 190px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: var(--muted);
-      font-weight: 800;
-    }
-    .audit-empty {
-      padding: 16px;
-      color: var(--muted);
-      font-weight: 800;
-    }
-    .audit-restore-btn {
-      padding: 7px 10px;
-      font-size: 11.5px;
-      white-space: nowrap;
-    }
-
     @media (max-width: 900px) {
       body { padding: 14px; }
       .grid, .form-row, .form-row.two, .form-row.four, .lead-source-grid, .source-split { grid-template-columns: 1fr; }
       .counter { grid-template-columns: 1fr 36px 70px 36px; }
       .staff-row { grid-template-columns: 1fr; }
-      .game-board, .announcement-row, .history-layout, .summary-stats, .top-checklist, .compact-two, .audit-toolbar-left { grid-template-columns: 1fr; }
+      .game-board, .announcement-row, .history-layout, .summary-stats, .top-checklist, .compact-two { grid-template-columns: 1fr; }
       #reportPreview { padding: 22px; }
     }
 
@@ -1291,25 +1206,6 @@
         </div>
       </div>
     </section>
-
-    <section class="card full audit-card" id="auditHistoryCard">
-      <div class="history-header">
-        <h2>🕵️ Firebase History / Restore</h2>
-        <div class="history-note">누가 언제 저장/초기화했는지 확인하고 이전 저장본으로 복구할 수 있어요.</div>
-      </div>
-      <div class="audit-toolbar">
-        <div class="audit-toolbar-left">
-          <div><label>확인할 날짜</label><input id="auditDate" type="date" /></div>
-          <div><label>검색</label><input id="auditSearch" placeholder="보고자 / 브라우저 / action" /></div>
-          <button class="secondary small" onclick="window.forenaLoadAuditHistory && window.forenaLoadAuditHistory()">History 새로고침</button>
-        </div>
-        <div class="hint">Restore는 선택한 저장 순간의 전체 입력값을 Firebase에 다시 저장합니다.</div>
-      </div>
-      <div class="audit-table-wrap">
-        <div id="auditHistoryList" class="audit-empty">Firebase 연결 후 history를 불러오는 중...</div>
-      </div>
-    </section>
-
   </div>
   <div class="announcement-popup" id="announcementPopup">
     <h3>📣 FORENA TEAM MESSAGE</h3>
@@ -2615,7 +2511,6 @@ maybeRunTimedReminders();
 maybeRunStaffLeaveAlerts();
 
 document.getElementById('reportDate')?.addEventListener('change', handleManualReportDateChange);
-document.getElementById('auditSearch')?.addEventListener('input', () => window.forenaRenderAuditHistory && window.forenaRenderAuditHistory());
 </script>
 
 <script type="module">
@@ -2648,13 +2543,7 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
   let activeReportRef = null;
   let stopListening = null;
   let hasReceivedInitialSnapshot = false;
-  let allowSaveBeforeInitialSnapshot = false;
-  let lastKnownRemoteTotals = null;
-  let lastSavedLocalTotals = null;
-  let auditRowsCache = [];
-  let auditListenDateKey = "";
-  let stopAuditListening = null;
-  let restoringSnapshot = false;
+let allowSaveBeforeInitialSnapshot = false;
 
   function setFirebaseStatus(text, mode) {
     if (!statusEl) return;
@@ -2695,172 +2584,6 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
     return document.getElementById("reportDate")?.value || koreaDateKey();
   }
 
-
-  function getBrowserId() {
-    const key = "forenaAuditBrowserId";
-    let id = localStorage.getItem(key);
-    if (!id) {
-      id = "browser_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem(key, id);
-    }
-    return id;
-  }
-
-  function getTotalsSnapshot() {
-    try {
-      const t = totals();
-      return {
-        reservations: Number(t.reservations || 0),
-        sameDay: Number(t.sameDay || 0),
-        walkin: Number(t.walkin || 0),
-        cancels: Number(t.cancels || 0),
-        changes: Number(t.changes || 0)
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function classifyAuditAction(previousTotals, newTotals) {
-    if (!previousTotals || !newTotals) return "save";
-    const prevMain = Number(previousTotals.reservations || 0) + Number(previousTotals.sameDay || 0) + Number(previousTotals.walkin || 0) + Number(previousTotals.cancels || 0) + Number(previousTotals.changes || 0);
-    const newMain = Number(newTotals.reservations || 0) + Number(newTotals.sameDay || 0) + Number(newTotals.walkin || 0) + Number(newTotals.cancels || 0) + Number(newTotals.changes || 0);
-    if (prevMain > 0 && newMain === 0) return "possible_reset_to_zero";
-    if (newMain < prevMain) return "decrease_or_partial_reset";
-    if (newMain > prevMain) return "increase";
-    return "save_no_total_change";
-  }
-
-  async function writeAuditLog(action, previousTotals, newTotals, extra = {}) {
-    try {
-      const dateKey = activeDateKey || currentReportDateKey();
-      const reporter = document.getElementById("reporter")?.value || "";
-      const id = Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-      await set(ref(db, "auditLogs/" + dateKey + "/" + id), {
-        action,
-        updatedBy: reporter,
-        previousTotal: previousTotals,
-        newTotal: newTotals,
-        formDataSnapshot: extra.formDataSnapshot || null,
-        browserId: getBrowserId(),
-        reportDate: dateKey,
-        pageUrl: location.href,
-        userAgent: navigator.userAgent,
-        createdAt: serverTimestamp(),
-        createdAtKoreaTime: koreaTimeLabel(),
-        ...extra
-      });
-    } catch (error) {
-      console.error("Audit log failed", error);
-    }
-  }
-
-
-  function auditDateKey() {
-    return document.getElementById("auditDate")?.value || currentReportDateKey();
-  }
-
-  function auditTotalText(t) {
-    if (!t) return "-";
-    return `예약 ${Number(t.reservations || 0)} / 당예 ${Number(t.sameDay || 0)} / 워크인 ${Number(t.walkin || 0)} / 취소 ${Number(t.cancels || 0)} / 변경 ${Number(t.changes || 0)}`;
-  }
-
-  function auditActionLabel(action) {
-    const labels = {
-      possible_reset_to_zero: "⚠️ Reset to 0",
-      decrease_or_partial_reset: "⬇️ Decrease",
-      increase: "⬆️ Increase",
-      save_no_total_change: "Save",
-      restore_snapshot: "🔄 Restore",
-      save: "Save"
-    };
-    return labels[action] || action || "save";
-  }
-
-  function safeAuditText(value) {
-    return String(value || "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
-  }
-
-  function renderAuditHistory() {
-    const box = document.getElementById("auditHistoryList");
-    if (!box) return;
-    const keyword = (document.getElementById("auditSearch")?.value || "").toLowerCase().trim();
-    let rows = auditRowsCache.slice().sort((a, b) => String(b.id).localeCompare(String(a.id)));
-    if (keyword) {
-      rows = rows.filter(r => JSON.stringify(r).toLowerCase().includes(keyword));
-    }
-    if (!rows.length) {
-      box.className = "audit-empty";
-      box.innerHTML = "해당 날짜의 history가 아직 없어요.";
-      return;
-    }
-    box.className = "";
-    box.innerHTML = `
-      <table class="audit-table">
-        <thead><tr><th>Time</th><th>Action</th><th>By</th><th>Browser</th><th>Before</th><th>After</th><th>Restore</th></tr></thead>
-        <tbody>
-          ${rows.map(r => {
-            const hasSnapshot = !!r.formDataSnapshot;
-            const btn = hasSnapshot ? `<button class="audit-restore-btn danger" onclick="window.forenaRestoreAuditSnapshot('${safeAuditText(r.id)}')">Restore</button>` : `<span class="hint-inline">no snapshot</span>`;
-            return `<tr>
-              <td>${safeAuditText(r.createdAtKoreaTime || "-")}</td>
-              <td><span class="audit-action ${safeAuditText(r.action)}">${safeAuditText(auditActionLabel(r.action))}</span></td>
-              <td>${safeAuditText(r.updatedBy || "(blank)")}</td>
-              <td><div class="audit-browser" title="${safeAuditText(r.browserId || "")}">${safeAuditText(r.browserId || "-")}</div></td>
-              <td>${safeAuditText(auditTotalText(r.previousTotal))}</td>
-              <td>${safeAuditText(auditTotalText(r.newTotal))}</td>
-              <td>${btn}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>`;
-  }
-
-  function loadAuditHistory(force = false) {
-    const nextDate = auditDateKey();
-    if (!force && stopAuditListening && auditListenDateKey === nextDate) {
-      renderAuditHistory();
-      return;
-    }
-    if (typeof stopAuditListening === "function") stopAuditListening();
-    auditListenDateKey = nextDate;
-    const box = document.getElementById("auditHistoryList");
-    if (box) { box.className = "audit-empty"; box.innerHTML = "History 불러오는 중..."; }
-    stopAuditListening = onValue(ref(db, "auditLogs/" + nextDate), (snapshot) => {
-      const val = snapshot.val() || {};
-      auditRowsCache = Object.entries(val).map(([id, data]) => ({ id, ...(data || {}) }));
-      renderAuditHistory();
-    }, (error) => {
-      console.error(error);
-      if (box) { box.className = "audit-empty"; box.innerHTML = "History 불러오기 실패"; }
-    });
-  }
-
-  async function restoreAuditSnapshot(id) {
-    const row = auditRowsCache.find(r => r.id === id);
-    if (!row || !row.formDataSnapshot) {
-      alert("복구할 snapshot이 없어요.");
-      return;
-    }
-    const dateKey = row.reportDate || auditDateKey();
-    const ok = confirm(`${dateKey} ${row.createdAtKoreaTime || ""} 저장본으로 복구할까요?\n현재 Firebase 데이터가 이 저장본으로 바뀝니다.`);
-    if (!ok) return;
-    const reportDateEl = document.getElementById("reportDate");
-    if (reportDateEl) reportDateEl.value = dateKey;
-    attachRealtimeListener(true);
-    applyingRemoteData = true;
-    window.forenaApplyData({...row.formDataSnapshot, reportDate: dateKey});
-    applyingRemoteData = false;
-    restoringSnapshot = true;
-    allowSaveBeforeInitialSnapshot = true;
-    await saveReportToFirebase();
-    toast("이전 저장본으로 복구했어요");
-  }
-
-  window.forenaLoadAuditHistory = () => loadAuditHistory(true);
-  window.forenaRenderAuditHistory = renderAuditHistory;
-  window.forenaRestoreAuditSnapshot = restoreAuditSnapshot;
-
   if (!firebaseConfig.databaseURL || firebaseConfig.databaseURL.includes("PASTE_YOUR")) {
     setFirebaseStatus("databaseURL 입력 필요", "offline");
     console.warn("Firebase Realtime Database URL is missing.");
@@ -2900,14 +2623,11 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
           return;
         }
 
-        lastKnownRemoteTotals = remote.dailyTotals || null;
         applyingRemoteData = true;
         const safeFormData = {...remote.formData, reportDate: activeDateKey};
         window.forenaApplyData(safeFormData);
         updateTodayDateDisplay();
         applyingRemoteData = false;
-        if (!lastKnownRemoteTotals) lastKnownRemoteTotals = getTotalsSnapshot();
-        lastSavedLocalTotals = lastKnownRemoteTotals;
         setFirebaseStatus(`실시간 동기화됨 (${activeDateKey})`, "online");
       }, (error) => {
         console.error(error);
@@ -2926,16 +2646,10 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
       }
 
       const reporter = document.getElementById("reporter")?.value || "";
-      const currentTotals = getTotalsSnapshot();
-      const previousTotals = lastKnownRemoteTotals || lastSavedLocalTotals || null;
-      const auditAction = restoringSnapshot ? "restore_snapshot" : classifyAuditAction(previousTotals, currentTotals);
-      const formData = window.forenaCollectData();
       const payload = {
-        formData: formData,
-        dailyTotals: currentTotals,
+        formData: window.forenaCollectData(),
         updatedAt: serverTimestamp(),
         updatedBy: reporter,
-        lastUpdatedBrowserId: getBrowserId(),
         reportDate: activeDateKey,
         appName: "FORENA CLINIC ENGLISH TEAM DASHBOARD"
       };
@@ -2944,7 +2658,7 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
       setLastSavedStatus("Saving...", "saving");
       try {
         await set(activeReportRef, payload);
-        await writeAuditLog(auditAction, previousTotals, currentTotals, { formDataSnapshot: formData });
+        const currentTotals = totals();
         await set(ref(db, "dailySummary/" + activeDateKey), {
           totalReservation: currentTotals.reservations,
           sameDay: currentTotals.sameDay,
@@ -2952,19 +2666,14 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
           change: currentTotals.changes,
           walkin: currentTotals.walkin,
           updatedAt: serverTimestamp(),
-          updatedBy: reporter,
-          lastUpdatedBrowserId: getBrowserId()
+          updatedBy: reporter
         });
-        lastKnownRemoteTotals = currentTotals;
-        lastSavedLocalTotals = currentTotals;
         allowSaveBeforeInitialSnapshot = false;
         setFirebaseStatus(`실시간 저장됨 (${activeDateKey})`, "online");
-        restoringSnapshot = false;
         setLastSavedStatus(`Last Saved: ${koreaTimeLabel()} ✓`, "saved");
       } catch (error) {
         console.error(error);
         setFirebaseStatus("저장 실패", "offline");
-        restoringSnapshot = false;
         setLastSavedStatus("Save failed", "error");
       }
     }
@@ -2991,10 +2700,7 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
     document.addEventListener("input", scheduleFirebaseSave);
     document.addEventListener("change", (event) => {
       if (event.target && event.target.id === "reportDate") {
-        const auditDateEl = document.getElementById("auditDate");
-        if (auditDateEl) auditDateEl.value = currentReportDateKey();
         attachRealtimeListener();
-        loadAuditHistory(true);
       }
       scheduleFirebaseSave();
     });
@@ -3026,13 +2732,7 @@ document.getElementById('auditSearch')?.addEventListener('input', () => window.f
     });
 
     firebaseReady = true;
-    const auditDateEl = document.getElementById("auditDate");
-    if (auditDateEl) {
-      auditDateEl.value = currentReportDateKey();
-      auditDateEl.addEventListener("change", () => loadAuditHistory(true));
-    }
     attachRealtimeListener();
-    loadAuditHistory(true);
     onValue(ref(db, "dailySummary"), (snapshot) => {
       if(window.forenaRenderHistoryChart){
         window.forenaRenderHistoryChart(snapshot.val() || {});
